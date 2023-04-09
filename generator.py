@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-# from random import shuffle
+from itertools import product
+from numba import jit
 
 def UniformDistribution(n,seed=int(time.time())%100000):
     #linear congruential generator
@@ -148,5 +149,52 @@ def NormalDistribution_stratified_inversed(n,stratum=10,seed=int(time.time())%10
 
 
 
+# def NormalDistribution_stratified_accept_reject(n,stratum=10,seed=int(time.time())%100000):
+#     #the g(x) we select is 
+#     #g(x)=exp(x)/2 x<=0
+#     #g(x)=exp(-x)/2 x>0
+#     normal_list=[]
+#     #c is the parameter of the acceptance-rejection method
+#     #1/c denotes the probability that a point is accpeted
+#     #approximately c is 1.315489246958914
+#     c=(2/np.pi)**0.5*np.exp(0.5)
+#     while(len(normal_list)<n):
+#         uniform_list=list(UniformDistribution(n+1,seed=seed+len(normal_list)))
+#         for i in range(n):
+#             x=DoubleExpoential(uniform_list[i])
+#             gx=0.5*np.exp(-x) if x>0 else 0.5*np.exp(x)
+#             fx=1/np.sqrt(2*np.pi)*np.exp(-x**2/2)
+#             if(uniform_list[i+1]<fx/(gx*c)):
+#                 normal_list.append(x)
+    
+#     uniform_list=[NormalCdf(i) for i in normal_list]
+#     stratum_quota=n/stratum
+#     for i in range(n):
+#         uniform_list[i]=float(i//stratum_quota)/stratum+uniform_list[i]/stratum     
+#     normal_list=[InverseNormalCdf(i) for i in uniform_list]
+#     normal_list=shuffle(normal_list)
+#     return normal_list[:n]
+
+def stratify(x,i,stratum):
+    return float(i/stratum)+x/stratum
+
+@jit
+def NormalDistribution_stratified_accept_reject(n,v,stratum=10,seed=int(time.time())%100000):
+    #every random variable has n samples(totally v varibales) and groups in the variable is stratum
+    #return normal list and the number of groups
+    normal_list=NormalDistribution_accept_reject(n*v)
+    iter_list=list(product(*[range(v) for _ in range(v)]))
+    def stratify(x,i,stratum):
+        return float(i/stratum)+x/stratum
+    subgroup_size=n*v/len(iter_list)
+    for i in range(len(iter_list)):
+        group_info=iter_list[i]
+        for j in range(int(subgroup_size/v)):
+            for k in range(v):
+                normal_list[int(k+j*v+subgroup_size*i)]=stratify(normal_list[int(k+j*v+subgroup_size*i)],group_info[k],stratum)
+    return normal_list,len(iter_list)
+
+
 if __name__=='__main__':
-    print(NormalDistribution_stratified_inversed(1000))
+    result=NormalDistribution_stratified_accept_reject(1000,4)
+    print(result)
