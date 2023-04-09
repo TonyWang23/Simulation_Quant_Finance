@@ -179,11 +179,12 @@ def stratify(x,i,stratum):
     return float(i/stratum)+x/stratum
 
 @jit
-def NormalDistribution_stratified_accept_reject(n,v,stratum=10,seed=int(time.time())%100000):
+def NormalDistribution_stratified_accept_reject(n,v,stratum=4,seed=int(time.time())%100000):
     #every random variable has n samples(totally v varibales) and groups in the variable is stratum
     #return normal list and the number of groups
     normal_list=NormalDistribution_accept_reject(n*v)
-    iter_list=list(product(*[range(v) for _ in range(v)]))
+    uniform_list=[NormalCdf(i) for i in normal_list]
+    iter_list=list(product(*[range(stratum) for _ in range(v)]))
     def stratify(x,i,stratum):
         return float(i/stratum)+x/stratum
     subgroup_size=n*v/len(iter_list)
@@ -191,7 +192,8 @@ def NormalDistribution_stratified_accept_reject(n,v,stratum=10,seed=int(time.tim
         group_info=iter_list[i]
         for j in range(int(subgroup_size/v)):
             for k in range(v):
-                normal_list[int(k+j*v+subgroup_size*i)]=stratify(normal_list[int(k+j*v+subgroup_size*i)],group_info[k],stratum)
+                uniform_list[int(k+j*v+subgroup_size*i)]=stratify(uniform_list[int(k+j*v+subgroup_size*i)],group_info[k],stratum)
+    normal_list=[InverseNormalCdf(i) for i in uniform_list]
     return normal_list,len(iter_list)
 
 

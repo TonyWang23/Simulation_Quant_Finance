@@ -38,7 +38,7 @@ def OptionPricingResultGBM_antithetic(r,sigma_list,S0_list,T,n,cov_matrix,K):
 def OptionPricingResultGBM_stratified(r,sigma_list,S0_list,T,n,cov_matrix,K):
     #only used stratifeid sampling method
     sde_num=len(sigma_list)
-    random_list,groups=generator.NormalDistribution_stratified_accept_reject(sde_num*n,sde_num)
+    random_list,groups=generator.NormalDistribution_stratified_accept_reject(n,sde_num)
     subgroup_size=sde_num*n/groups
     L,_=generator.CholeskyDecomposition(cov_matrix)
     mean_list=[]
@@ -74,7 +74,7 @@ def OptionPricingResultGBM_antithetic_stratified(r,sigma_list,S0_list,T,n,cov_ma
         mean_list.append(np.mean(H))
         var_list.append(np.var(H))
         value_list.append(H)
-    return mean_list,var_list,value_list,subgroup_size
+    return mean_list,var_list,value_list,int(subgroup_size)
 
 
 
@@ -87,11 +87,12 @@ if __name__=='__main__':
     sigma_list=[0.1,0.1,0.1,0.2]
     S0_list=[45,50,45,55]
     T=0.5
-    n=20000
+    n=12800
     cov_matrix=np.array([[1,0.3,-0.2,0.4],[0.3,1,-0.3,0.1],[-0.2,-0.3,1,0.5],[0.4,0.1,0.5,1]])
     K_list=[50+i*5 for i in range(7)]
     
-    result=OptionPricingResultGBM_stratified(r,sigma_list,S0_list,T,n,cov_matrix,K_list[0])
+    result=OptionPricingResultGBM_stratified(r,sigma_list,S0_list,T,n,cov_matrix,K_list[4])
+    print('finished')
     # r=0.02
     # sigma_list=[0.1,0.1,0.1,0.2]
     # S0_list=[45,50,45,55]
