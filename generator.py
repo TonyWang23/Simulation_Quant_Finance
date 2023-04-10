@@ -137,7 +137,7 @@ def shuffle(x,seed=int(time.time())%100000):
     return x
 
 def NormalDistribution_stratified_inversed(n,stratum=10,seed=int(time.time())%100000):
-    #default stratum number is 10
+    #this function is used to generate stratified one-varibale samples, default stratum number is 10
     #actually stratified sampling can be used for any distribution generation for variance reduction
     uniform_list=list(UniformDistribution(n,seed))
     stratum_quota=n/stratum
@@ -176,21 +176,25 @@ def NormalDistribution_stratified_inversed(n,stratum=10,seed=int(time.time())%10
 #     return normal_list[:n]
 
 def stratify(x,i,stratum):
+    #x is the random variable, i is the group number(stratum id), stratum is the number of groups(total stratum numbers)
     return float(i/stratum)+x/stratum
 
 @jit
 def NormalDistribution_stratified_accept_reject(n,v,stratum=4,seed=int(time.time())%100000):
     #every random variable has n samples(totally v varibales) and groups in the variable is stratum
     #return normal list and the number of groups
-    normal_list=NormalDistribution_accept_reject(n*v)
-    uniform_list=[NormalCdf(i) for i in normal_list]
+    normal_list=NormalDistribution_accept_reject(n*v,seed=seed)
+    uniform_list=[NormalCdf(i) for i in normal_list]#change normal distribution to uniform distribution for stratification
     iter_list=list(product(*[range(stratum) for _ in range(v)]))
+    #iter_list is the list of all possible group combinations
+    #eg.(0,0,0,0),(0,0,0,1),(1,1,2,3)
     def stratify(x,i,stratum):
         return float(i/stratum)+x/stratum
     subgroup_size=n*v/len(iter_list)
+    #every subgroup has the same size, and loop it
     for i in range(len(iter_list)):
-        group_info=iter_list[i]
-        for j in range(int(subgroup_size/v)):
+        group_info=iter_list[i]#inside subgroup, every random variable are used in the terms of set(every v samples)
+        for j in range(int(subgroup_size/v)):#every sample inside set gets the same group number, then stratify them
             for k in range(v):
                 uniform_list[int(k+j*v+subgroup_size*i)]=stratify(uniform_list[int(k+j*v+subgroup_size*i)],group_info[k],stratum)
     normal_list=[InverseNormalCdf(i) for i in uniform_list]
